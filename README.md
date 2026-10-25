@@ -11,7 +11,7 @@ Local AWS endpoint in one command. Runs [Moto](https://github.com/getmoto/moto) 
 ## Install
 
 ```sh
-git clone git@github.com:tassan/moto-cli.git ~/GitHub/moto-cli
+git clone https://github.com/tassan/moto-cli.git ~/GitHub/moto-cli
 ln -s ~/GitHub/moto-cli/moto ~/.local/bin/moto   # any dir on your PATH
 ```
 
