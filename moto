@@ -5,7 +5,7 @@ set -euo pipefail
 NAME="${MOTO_NAME:-moto}"
 PORT="${MOTO_PORT:-5555}"
 IMAGE="${MOTO_IMAGE:-motoserver/moto:latest}"
-PROFILE="moto"
+PROFILE="${MOTO_PROFILE:-moto}"
 REGION="${MOTO_REGION:-us-east-1}"
 URL="http://localhost:${PORT}"
 
@@ -185,7 +185,7 @@ usage: moto <command>
   doctor     check docker, aws CLI, profile, port, health
   help      this text
 
-env: MOTO_PORT (5555)  MOTO_REGION (us-east-1)  MOTO_IMAGE  MOTO_NAME
+env: MOTO_PORT (5555)  MOTO_REGION (us-east-1)  MOTO_IMAGE  MOTO_NAME  MOTO_PROFILE (moto)
 EOF
 }
 
