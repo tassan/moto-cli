@@ -7,6 +7,7 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ### Added
 - `CHANGELOG.md`.
+- Claude Code skill: `skills/moto/SKILL.md`.
 - `AGENTS.md` (and `CLAUDE.md` pointing to it): instructions for AI agents using or developing moto-cli.
 
 ## [0.1.2.1] - 2026-10-25

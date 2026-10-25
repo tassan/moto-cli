@@ -160,6 +160,16 @@ Full agent instructions: https://raw.githubusercontent.com/tassan/moto-cli/main/
 
 For Claude Code you can also import it directly in the project's `CLAUDE.md` with `@/path/to/moto-cli/AGENTS.md`.
 
+### Claude Code skill
+
+[`skills/moto/SKILL.md`](skills/moto/SKILL.md) is a Claude Code skill that loads on demand when you ask for local AWS/Terraform testing. Install it for all projects:
+
+```sh
+ln -s ~/GitHub/moto-cli/skills/moto ~/.claude/skills/moto
+```
+
+Or per project: link or copy it to `<project>/.claude/skills/moto`.
+
 ## Development
 
 ```sh
