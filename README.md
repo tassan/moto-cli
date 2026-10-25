@@ -40,6 +40,64 @@ moto aws s3 ls
 moto reset
 ```
 
+## Terraform
+
+Plain `terraform` (or OpenTofu) works against moto; no wrapper like `tflocal` is needed. Point the AWS provider at the moto endpoint:
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 5.0"
+    }
+  }
+}
+
+variable "moto_endpoint" {
+  default = "http://localhost:5555" # change if you set MOTO_PORT
+}
+
+provider "aws" {
+  region                      = "us-east-1"
+  access_key                  = "test"
+  secret_key                  = "test"
+  skip_credentials_validation = true
+  skip_metadata_api_check     = true
+  skip_requesting_account_id  = true
+  s3_use_path_style           = true
+
+  # add every service you use
+  endpoints {
+    s3       = var.moto_endpoint
+    sqs      = var.moto_endpoint
+    dynamodb = var.moto_endpoint
+    iam      = var.moto_endpoint
+    sts      = var.moto_endpoint
+  }
+}
+
+resource "aws_s3_bucket" "demo" {
+  bucket = "demo-bucket"
+}
+
+resource "aws_sqs_queue" "demo" {
+  name = "demo-queue"
+}
+```
+
+```sh
+moto start
+terraform init
+terraform apply -auto-approve
+moto aws s3 ls          # demo-bucket
+moto aws sqs list-queues
+terraform destroy -auto-approve
+moto reset              # drop leftover state (terraform state is not moto's)
+```
+
+`moto info` prints a ready-to-paste provider block for the current port. State is ephemeral, so after `moto stop`/`moto reset` delete your local `terraform.tfstate` or Terraform will think resources still exist.
+
 ## Configuration
 
 Environment variables:
