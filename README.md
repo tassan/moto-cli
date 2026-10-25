@@ -1,5 +1,7 @@
 # moto-cli
 
+[![ci](https://github.com/tassan/moto-cli/actions/workflows/ci.yml/badge.svg)](https://github.com/tassan/moto-cli/actions/workflows/ci.yml)
+
 Local AWS endpoint in one command. Runs [Moto](https://github.com/getmoto/moto) in Docker, controlled by a native bash CLI. No Python or moto install on the host.
 
 ## Why
