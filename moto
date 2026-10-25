@@ -2,7 +2,7 @@
 # moto - local AWS (Moto server) in Docker, controlled from a native CLI.
 set -euo pipefail
 
-VERSION="0.1.2"
+VERSION="0.1.2.1"
 NAME="${MOTO_NAME:-moto}"
 PORT="${MOTO_PORT:-5555}"
 IMAGE="${MOTO_IMAGE:-motoserver/moto:latest}"
