@@ -136,6 +136,10 @@ Run `moto doctor`. Common causes:
 - SDK ignores the endpoint: use `eval "$(moto env)"` (`AWS_ENDPOINT_URL` needs a recent SDK), or set the endpoint per client.
 - aws CLI v1: profile `endpoint_url` is unsupported, use `moto env` instead.
 
+## For AI agents
+
+[AGENTS.md](AGENTS.md) teaches coding agents how to use `moto` (workflow, Terraform setup, gotchas). To use it from another project, point your agent at that file, e.g. copy it into the project's `AGENTS.md`/`CLAUDE.md` or reference it from there.
+
 ## Development
 
 ```sh
