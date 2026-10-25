@@ -5,10 +5,13 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 
 ## [Unreleased]
 
+## [0.1.3] - 2026-10-25
+
 ### Added
 - `CHANGELOG.md`.
 - Claude Code skill: `skills/moto/SKILL.md`.
 - `AGENTS.md` (and `CLAUDE.md` pointing to it): instructions for AI agents using or developing moto-cli.
+- README: "For AI agents" section with setup snippets.
 
 ## [0.1.2.1] - 2026-10-25
 
@@ -38,7 +41,8 @@ Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/). Dates 
 - Env overrides: `MOTO_PORT`, `MOTO_REGION`, `MOTO_IMAGE`, `MOTO_NAME`, `MOTO_PROFILE`.
 - MIT license, CONTRIBUTING, end-to-end smoke test, CI (shellcheck + smoke).
 
-[Unreleased]: https://github.com/tassan/moto-cli/compare/v0.1.2.1...HEAD
+[Unreleased]: https://github.com/tassan/moto-cli/compare/v0.1.3...HEAD
+[0.1.3]: https://github.com/tassan/moto-cli/compare/v0.1.2.1...v0.1.3
 [0.1.2.1]: https://github.com/tassan/moto-cli/compare/v0.1.2...v0.1.2.1
 [0.1.2]: https://github.com/tassan/moto-cli/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/tassan/moto-cli/compare/v0.1.0...v0.1.1
