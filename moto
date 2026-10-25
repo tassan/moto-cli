@@ -2,6 +2,7 @@
 # moto - local AWS (Moto server) in Docker, controlled from a native CLI.
 set -euo pipefail
 
+VERSION="0.1.1"
 NAME="${MOTO_NAME:-moto}"
 PORT="${MOTO_PORT:-5555}"
 IMAGE="${MOTO_IMAGE:-motoserver/moto:latest}"
@@ -183,6 +184,7 @@ usage: moto <command>
   aws ...    run aws CLI against moto (aws --profile moto ...)
   update     pull latest image, restart if running
   doctor     check docker, aws CLI, profile, port, health
+  version    print moto-cli version
   help      this text
 
 env: MOTO_PORT (5555)  MOTO_REGION (us-east-1)  MOTO_IMAGE  MOTO_NAME  MOTO_PROFILE (moto)
@@ -202,6 +204,7 @@ case "$c" in
   aws)            exec aws --profile "$PROFILE" "$@" ;;
   update)         cmd_update ;;
   doctor)         cmd_doctor ;;
+  version|-v|--version) echo "moto-cli $VERSION" ;;
   help|-h|--help) cmd_help ;;
   *)              cmd_help; exit 1 ;;
 esac

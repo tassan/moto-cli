@@ -29,6 +29,7 @@ moto logs [-f]
 moto aws ...    # same as: aws --profile moto ...
 moto update     # pull latest image, restart if running
 moto doctor     # check docker, aws CLI, profile, port, health
+moto version    # print moto-cli version
 ```
 
 Example:
