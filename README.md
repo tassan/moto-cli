@@ -2,6 +2,12 @@
 
 Local AWS endpoint in one command. Runs [Moto](https://github.com/getmoto/moto) in Docker, controlled by a native bash CLI. No Python or moto install on the host.
 
+## Why
+
+Made to study, test and try Terraform against AWS quickly and without the risk of accidentally running up a big AWS bill. Everything runs locally against a mock, so a bad `terraform apply` costs nothing.
+
+> **Vibecoded.** This project was vibecoded with an AI assistant, to move fast on that goal. It is a small convenience script, not battle-tested software: read it before trusting it, and expect rough edges. Moto is a mock, so behavior can differ from real AWS; verify against a real account before relying on anything in production.
+
 ## Requirements
 
 - Docker (Docker Desktop, Colima, OrbStack, ...)
