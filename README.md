@@ -138,7 +138,27 @@ Run `moto doctor`. Common causes:
 
 ## For AI agents
 
-[AGENTS.md](AGENTS.md) teaches coding agents how to use `moto` (workflow, Terraform setup, gotchas). To use it from another project, point your agent at that file, e.g. copy it into the project's `AGENTS.md`/`CLAUDE.md` or reference it from there.
+[AGENTS.md](AGENTS.md) teaches coding agents (Claude Code, Codex, Cursor, Copilot, Gemini CLI, ...) how to use `moto`: rules, workflow, Terraform setup and gotchas. [CLAUDE.md](CLAUDE.md) just imports it for Claude Code.
+
+Agents only read these files inside this repo, so to make an agent use moto in **your own** project, add it there. Pick one:
+
+Copy the full instructions into the project (works with any agent):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/tassan/moto-cli/main/AGENTS.md >> AGENTS.md
+```
+
+Or add a short pointer to the project's `AGENTS.md` / `CLAUDE.md`:
+
+```md
+## AWS testing
+Never use real AWS credentials locally. Use the `moto` CLI (https://github.com/tassan/moto-cli):
+`moto start`, `moto aws <cmd>`, `eval "$(moto env)"`, `moto reset`, `moto stop`, `moto doctor`.
+Endpoint is http://localhost:5555, creds test/test. Point the Terraform AWS provider at it.
+Full agent instructions: https://raw.githubusercontent.com/tassan/moto-cli/main/AGENTS.md
+```
+
+For Claude Code you can also import it directly in the project's `CLAUDE.md` with `@/path/to/moto-cli/AGENTS.md`.
 
 ## Development
 
