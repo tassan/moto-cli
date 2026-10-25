@@ -125,10 +125,10 @@ cmd_doctor() {
   fail() { printf '  FAIL  %s\n' "$*"; bad=1; }
   warn() { printf '  warn  %s\n' "$*"; }
 
-  command -v docker >/dev/null && ok "docker installed" || fail "docker not found"
+  if command -v docker >/dev/null; then ok "docker installed"; else fail "docker not found"; fi
   if docker info >/dev/null 2>&1; then ok "docker daemon running"
   else fail "docker daemon not running (start Docker Desktop/Colima/OrbStack)"; fi
-  command -v curl >/dev/null && ok "curl installed" || fail "curl not found"
+  if command -v curl >/dev/null; then ok "curl installed"; else fail "curl not found"; fi
   if command -v aws >/dev/null; then
     ok "aws CLI: $(aws --version 2>&1 | cut -d' ' -f1)"
     case "$(aws --version 2>&1)" in
@@ -136,8 +136,8 @@ cmd_doctor() {
     esac
     if aws configure get endpoint_url --profile "$PROFILE" >/dev/null 2>&1; then
       ep="$(aws configure get endpoint_url --profile "$PROFILE")"
-      [ "$ep" = "$URL" ] && ok "aws profile '$PROFILE' -> $ep" \
-        || warn "aws profile '$PROFILE' points at $ep, expected $URL (run: moto start)"
+      if [ "$ep" = "$URL" ]; then ok "aws profile '$PROFILE' -> $ep"
+      else warn "aws profile '$PROFILE' points at $ep, expected $URL (run: moto start)"; fi
     else
       warn "aws profile '$PROFILE' missing (run: moto start)"
     fi
@@ -165,7 +165,7 @@ cmd_doctor() {
     else ok "port $PORT free"; fi
   fi
 
-  [ "$bad" = 0 ] && echo "all good" || { echo "problems found"; return 1; }
+  if [ "$bad" = 0 ]; then echo "all good"; else echo "problems found"; return 1; fi
 }
 
 cmd_help() {
