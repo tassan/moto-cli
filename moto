@@ -1,0 +1,207 @@
+#!/usr/bin/env bash
+# moto - local AWS (Moto server) in Docker, controlled from a native CLI.
+set -euo pipefail
+
+NAME="${MOTO_NAME:-moto}"
+PORT="${MOTO_PORT:-5555}"
+IMAGE="${MOTO_IMAGE:-motoserver/moto:latest}"
+PROFILE="moto"
+REGION="${MOTO_REGION:-us-east-1}"
+URL="http://localhost:${PORT}"
+
+die() { echo "moto: $*" >&2; exit 1; }
+
+need_docker() {
+  command -v docker >/dev/null || die "docker not found"
+  docker info >/dev/null 2>&1 || die "docker daemon not running"
+}
+
+state() {
+  local s
+  s="$(docker ps -a --filter "name=^${NAME}\$" --format '{{.State}}')"
+  echo "${s:-none}"
+}
+is_running() { [ "$(state)" = running ]; }
+
+setup_profile() {
+  command -v aws >/dev/null || return 0
+  aws configure set aws_access_key_id test --profile "$PROFILE"
+  aws configure set aws_secret_access_key test --profile "$PROFILE"
+  aws configure set region "$REGION" --profile "$PROFILE"
+  aws configure set endpoint_url "$URL" --profile "$PROFILE"
+}
+
+wait_ready() {
+  for _ in $(seq 1 60); do
+    curl -fs "$URL/moto-api/" >/dev/null 2>&1 && return 0
+    sleep 0.5
+  done
+  die "server not ready after 30s (try: moto logs)"
+}
+
+cmd_start() {
+  need_docker
+  case "$(state)" in
+    running) ;;
+    none)
+      docker run -d --name "$NAME" -p "127.0.0.1:${PORT}:5000" "$IMAGE" >/dev/null ;;
+    *) docker start "$NAME" >/dev/null ;;
+  esac
+  wait_ready
+  setup_profile
+  cmd_info
+}
+
+cmd_stop() {
+  need_docker
+  if [ "$(state)" = none ]; then echo "moto: not running"; return; fi
+  docker rm -f "$NAME" >/dev/null
+  echo "moto: stopped"
+}
+
+cmd_status() {
+  need_docker
+  if is_running; then
+    echo "running  $URL  (since $(docker inspect -f '{{.State.StartedAt}}' "$NAME"))"
+  else
+    echo "stopped"
+  fi
+}
+
+cmd_info() {
+  cat <<EOF
+Moto endpoint: $URL   ($(is_running && echo running || echo stopped))
+AWS profile:   $PROFILE   (region $REGION, creds test/test)
+
+  moto aws s3 ls                  # aws CLI against moto
+  aws --profile $PROFILE s3 ls    # same
+  eval "\$(moto env)"              # env vars for SDKs/Terraform/etc.
+  moto reset                      # wipe all state
+
+Terraform provider block:
+  provider "aws" {
+    region                      = "$REGION"
+    access_key                  = "test"
+    secret_key                  = "test"
+    skip_credentials_validation = true
+    skip_metadata_api_check     = true
+    skip_requesting_account_id  = true
+    s3_use_path_style           = true
+    endpoints { # or: use AWS_ENDPOINT_URL (provider >= 5.x)
+      s3 = "$URL"  sqs = "$URL"  sns = "$URL"  dynamodb = "$URL"  iam = "$URL"  sts = "$URL"
+      lambda = "$URL"  ec2 = "$URL"  kms = "$URL"  secretsmanager = "$URL"  ssm = "$URL"
+    }
+  }
+EOF
+}
+
+cmd_env() {
+  cat <<EOF
+export AWS_ENDPOINT_URL=$URL
+export AWS_ACCESS_KEY_ID=test
+export AWS_SECRET_ACCESS_KEY=test
+export AWS_DEFAULT_REGION=$REGION
+export AWS_REGION=$REGION
+EOF
+}
+
+cmd_reset() {
+  is_running || die "not running"
+  curl -fs -X POST "$URL/moto-api/reset" >/dev/null
+  echo "moto: state reset"
+}
+
+cmd_logs() { need_docker; docker logs "$@" "$NAME"; }
+
+cmd_update() {
+  need_docker
+  docker pull "$IMAGE"
+  if is_running; then cmd_stop; cmd_start; fi
+}
+
+cmd_doctor() {
+  local bad=0
+  ok()   { printf '  ok    %s\n' "$*"; }
+  fail() { printf '  FAIL  %s\n' "$*"; bad=1; }
+  warn() { printf '  warn  %s\n' "$*"; }
+
+  command -v docker >/dev/null && ok "docker installed" || fail "docker not found"
+  if docker info >/dev/null 2>&1; then ok "docker daemon running"
+  else fail "docker daemon not running (start Docker Desktop/Colima/OrbStack)"; fi
+  command -v curl >/dev/null && ok "curl installed" || fail "curl not found"
+  if command -v aws >/dev/null; then
+    ok "aws CLI: $(aws --version 2>&1 | cut -d' ' -f1)"
+    case "$(aws --version 2>&1)" in
+      aws-cli/1.*) warn "aws CLI v1: profile endpoint_url unsupported, use 'eval \"\$(moto env)\"'" ;;
+    esac
+    if aws configure get endpoint_url --profile "$PROFILE" >/dev/null 2>&1; then
+      ep="$(aws configure get endpoint_url --profile "$PROFILE")"
+      [ "$ep" = "$URL" ] && ok "aws profile '$PROFILE' -> $ep" \
+        || warn "aws profile '$PROFILE' points at $ep, expected $URL (run: moto start)"
+    else
+      warn "aws profile '$PROFILE' missing (run: moto start)"
+    fi
+  else
+    warn "aws CLI not found (moto aws unavailable)"
+  fi
+
+  if docker info >/dev/null 2>&1; then
+    case "$(state)" in
+      running) ok "container '$NAME' running" ;;
+      none)    warn "container '$NAME' not created (run: moto start)" ;;
+      *)       warn "container '$NAME' exists but not running (run: moto start)" ;;
+    esac
+    if docker image inspect "$IMAGE" >/dev/null 2>&1; then ok "image $IMAGE present"
+    else warn "image $IMAGE not pulled yet (moto start pulls it)"; fi
+  fi
+
+  if is_running 2>/dev/null; then
+    if curl -fs "$URL/moto-api/" >/dev/null 2>&1; then ok "endpoint $URL healthy"
+    else fail "endpoint $URL not answering (moto logs)"; fi
+  else
+    # something else on the port?
+    if lsof -nP -iTCP:"$PORT" -sTCP:LISTEN >/dev/null 2>&1; then
+      fail "port $PORT in use by: $(lsof -nP -iTCP:"$PORT" -sTCP:LISTEN | awk 'NR==2{print $1" (pid "$2")"}') - set MOTO_PORT"
+    else ok "port $PORT free"; fi
+  fi
+
+  [ "$bad" = 0 ] && echo "all good" || { echo "problems found"; return 1; }
+}
+
+cmd_help() {
+  cat <<EOF
+usage: moto <command>
+
+  start      start server (pulls image first time), set up 'moto' aws profile
+  stop       stop and remove container (state lost)
+  restart    stop + start
+  status     running or not
+  info       endpoint, profile, examples, terraform snippet
+  env        print export lines:  eval "\$(moto env)"
+  reset      wipe all state, keep server running
+  logs [-f]  container logs
+  aws ...    run aws CLI against moto (aws --profile moto ...)
+  update     pull latest image, restart if running
+  doctor     check docker, aws CLI, profile, port, health
+  help      this text
+
+env: MOTO_PORT (5555)  MOTO_REGION (us-east-1)  MOTO_IMAGE  MOTO_NAME
+EOF
+}
+
+c="${1:-help}"; shift || true
+case "$c" in
+  start|up)       cmd_start ;;
+  stop|down)      cmd_stop ;;
+  restart)        cmd_stop; cmd_start ;;
+  status|ps)      cmd_status ;;
+  info)           cmd_info ;;
+  env)            cmd_env ;;
+  reset)          cmd_reset ;;
+  logs)           cmd_logs "$@" ;;
+  aws)            exec aws --profile "$PROFILE" "$@" ;;
+  update)         cmd_update ;;
+  doctor)         cmd_doctor ;;
+  help|-h|--help) cmd_help ;;
+  *)              cmd_help; exit 1 ;;
+esac
